@@ -87,7 +87,7 @@ void testApp::draw(){
     // if the drawer has requested to save, draw a half-heart
     // (will just draw on top of other one
     if ( bSaveRequestSent ) {
-        lHeart.draw(400, 450);
+        rHeart.draw(400, 450);
     }
     
     // drawing indicator for what color is selected
