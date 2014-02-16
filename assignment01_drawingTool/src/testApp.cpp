@@ -41,17 +41,17 @@ void testApp::setup(){
     
     // publishers
     spacebrew.addPublish("button", Spacebrew::TYPE_BOOLEAN);
-    spacebrew.addPublish("lastPosX", Spacebrew::TYPE_RANGE);
-    spacebrew.addPublish("lastPosY", Spacebrew::TYPE_RANGE);
     spacebrew.addPublish("posX", Spacebrew::TYPE_RANGE);
     spacebrew.addPublish("posY", Spacebrew::TYPE_RANGE);
+    spacebrew.addPublish("lastPosX", Spacebrew::TYPE_RANGE);
+    spacebrew.addPublish("lastPosY", Spacebrew::TYPE_RANGE);
     spacebrew.addPublish("color", Spacebrew::TYPE_STRING);
     // subscribers
     spacebrew.addSubscribe("button", Spacebrew::TYPE_BOOLEAN);
-    spacebrew.addSubscribe("lastPosX", Spacebrew::TYPE_RANGE);
-    spacebrew.addSubscribe("lastPosY", Spacebrew::TYPE_RANGE);
     spacebrew.addSubscribe("posX", Spacebrew::TYPE_RANGE);
     spacebrew.addSubscribe("posY", Spacebrew::TYPE_RANGE);
+    spacebrew.addSubscribe("lastPosX", Spacebrew::TYPE_RANGE);
+    spacebrew.addSubscribe("lastPosY", Spacebrew::TYPE_RANGE);
     spacebrew.addSubscribe("color", Spacebrew::TYPE_STRING);
     
     // connection and listener
@@ -126,7 +126,7 @@ void testApp::draw(){
         spacebrew.sendRange("lastPosX", lastX);
         spacebrew.sendRange("lastPosY", lastY);
         spacebrew.sendRange("posX", mouseX);
-        spacebrew.sendRange("posX", mouseY);
+        spacebrew.sendRange("posY", mouseY);
 
         lastX = mouseX;
         lastY = mouseY;
@@ -176,6 +176,8 @@ void testApp::mouseReleased(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
     
+    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
+    
     if (msg.name == "button") {
         bSaveRequestReceived = true;
     }
@@ -192,17 +194,23 @@ void testApp::onMessage( Spacebrew::Message & msg ){
         }
     }
     
-    if (msg.name == "lastPosX") {
-        remoteLastX = atoi(msg.value.c_str());
-    }
-    if (msg.name == "lastPosY") {
-        remoteLastY = atoi(msg.value.c_str());
-    }
     if (msg.name == "posX") {
+//        remoteX = ofToInt(msg.value);
         remoteX = atoi(msg.value.c_str());
+        cout << "type is: " << typeid(msg.value).name() << endl;
+        cout << "just value is " << msg.value << endl;
+        cout << "with ofToInt: " << ofToInt(msg.value) << endl;
+        cout << "with crazy c++ stuff: " << atoi(msg.value.c_str()) << endl;
+        cout << "calling posX function and remoteX is now: " << remoteX << endl;
     }
     if (msg.name == "posY") {
-        remoteY = atoi(msg.value.c_str());
+        remoteY = ofToInt(msg.value);
+    }
+    if (msg.name == "lastPosX") {
+        remoteLastX = ofToInt(msg.value);
+    }
+    if (msg.name == "lastPosY") {
+        remoteLastY = ofToInt(msg.value);
     }
     
 }
