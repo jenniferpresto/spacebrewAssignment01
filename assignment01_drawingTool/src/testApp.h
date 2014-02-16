@@ -25,10 +25,14 @@ class testApp : public ofBaseApp{
     void onMessage( Spacebrew::Message & msg );
     
     // basic drawing information
-    float lastX, lastY;
+    int lastX, lastY;
+    int remoteX, remoteY;
+    int remoteLastX, remoteLastY;
     bool isDrawing;
     ofColor penColor;
+    ofColor remoteColor;
     ofImage gHeart, lHeart, rHeart, fullHeart;
     
     bool bSaveRequestSent;
+    bool bSaveRequestReceived;
 };

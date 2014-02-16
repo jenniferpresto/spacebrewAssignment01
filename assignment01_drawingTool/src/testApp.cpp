@@ -13,8 +13,14 @@ void testApp::setup(){
     isDrawing = false;
     lastX = 0;
     lastY = 0;
+    
+    remoteX = 0;
+    remoteY = 0;
+    remoteLastX = 0;
+    remoteLastY = 0;
 
     penColor = ofColor(0, 0, 0);
+    remoteColor = ofColor(0, 0, 0);
     
     gHeart.loadImage("gHeart.png");
     lHeart.loadImage("lHeart.png");
@@ -89,6 +95,12 @@ void testApp::draw(){
     if ( bSaveRequestSent ) {
         rHeart.draw(400, 450);
     }
+    if ( bSaveRequestReceived ) {
+        lHeart.draw(400, 450);
+    }
+    if ( bSaveRequestSent && bSaveRequestReceived ) {
+        fullHeart.draw(400, 450);
+    }
     
     // drawing indicator for what color is selected
     ofNoFill();
@@ -105,7 +117,8 @@ void testApp::draw(){
     ofFill();
 
     ofSetColor( penColor );
-        
+    
+    // local drawing
     if ( isDrawing ) {
         ofLine(lastX, lastY, mouseX, mouseY);
         
@@ -115,20 +128,13 @@ void testApp::draw(){
         spacebrew.sendRange("posX", mouseX);
         spacebrew.sendRange("posX", mouseY);
 
-        if (penColor == ofColor(0, 0, 0) ) {
-            spacebrew.sendString("color", "black");
-        } else if (penColor == ofColor(255, 0, 0) ) {
-            spacebrew.sendString("color", "red");
-        } else if (penColor == ofColor(0, 255, 0) ) {
-            spacebrew.sendString("color", "green");
-        } else if (penColor == ofColor(0, 0, 255) ) {
-            spacebrew.sendString("color", "blue");
-        }
-
         lastX = mouseX;
         lastY = mouseY;
-
     }
+    
+    // draw remote information
+    ofSetColor(remoteColor);
+    ofLine(remoteLastX, remoteLastY, remoteX, remoteY);
 }
 
 //--------------------------------------------------------------
@@ -141,25 +147,63 @@ void testApp::mousePressed(int x, int y, int button){
         isDrawing = true;
     }
     
-    // change pen color
+    // change local pen color and notify remote
     if ( ofDistSquared(mouseX, mouseY, 50, 450) < 225 ) {
         penColor.set(0, 0, 0); // black
+        spacebrew.sendString("color", "black");
     } else if ( ofDistSquared(mouseX, mouseY, 100, 450) < 225 ) {
         penColor.set(255, 0, 0); // red
+        spacebrew.sendString("color", "red");
     } else if ( ofDistSquared(mouseX, mouseY, 150, 450) < 225 ) {
         penColor.set(0, 255, 0); // green
+        spacebrew.sendString("color", "green");
     } else if ( ofDistSquared(mouseX, mouseY, 200, 450) < 225 ) {
         penColor.set(0, 0, 255); // blue
+        spacebrew.sendString("color", "blue");
     }
     
     if ( ofDistSquared(mouseX, mouseY, 400, 450) < 1600 ) {
         bSaveRequestSent = true;
+        spacebrew.sendBoolean("button", true);
     }
 }
 
+//--------------------------------------------------------------
+void testApp::mouseReleased(int x, int y, int button){
+    isDrawing = false;
+}
 
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
+    
+    if (msg.name == "button") {
+        bSaveRequestReceived = true;
+    }
+    
+    if (msg.name == "color") {
+        if ( msg.value == "black" ) {
+            remoteColor.set(0, 0, 0);
+        } else if ( msg.value == "red" ) {
+            remoteColor.set(255, 0, 0);
+        } else if ( msg.value == "green" ) {
+            remoteColor.set(0, 255, 0);
+        } else if ( msg.value == "blue" ) {
+            remoteColor.set(0, 0, 255);
+        }
+    }
+    
+    if (msg.name == "lastPosX") {
+        remoteLastX = atoi(msg.value.c_str());
+    }
+    if (msg.name == "lastPosY") {
+        remoteLastY = atoi(msg.value.c_str());
+    }
+    if (msg.name == "posX") {
+        remoteX = atoi(msg.value.c_str());
+    }
+    if (msg.name == "posY") {
+        remoteY = atoi(msg.value.c_str());
+    }
     
 }
 
@@ -181,12 +225,6 @@ void testApp::mouseMoved(int x, int y ){
 //--------------------------------------------------------------
 void testApp::mouseDragged(int x, int y, int button){
 
-}
-
-
-//--------------------------------------------------------------
-void testApp::mouseReleased(int x, int y, int button){
-    isDrawing = false;
 }
 
 //--------------------------------------------------------------
