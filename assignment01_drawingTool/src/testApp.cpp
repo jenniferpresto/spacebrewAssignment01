@@ -194,9 +194,16 @@ void testApp::onMessage( Spacebrew::Message & msg ){
         }
     }
     
+    char chars[] = "\"";
     if (msg.name == "posX") {
 //        remoteX = ofToInt(msg.value);
-        remoteX = atoi(msg.value.c_str());
+        string tempX = msg.value;
+        for ( unsigned int i = 0; i < strlen(chars); ++i) {
+            tempX.erase (std::remove(tempX.begin(), tempX.end(), chars[i]), tempX.end());
+        }
+//        tempX = atoi(msg.value.c_str());
+        remoteX = ofToInt(tempX);
+        cout << "tempX: " << tempX << " remoteX: " << remoteX << endl;
         cout << "type is: " << typeid(msg.value).name() << endl;
         cout << "just value is " << msg.value << endl;
         cout << "with ofToInt: " << ofToInt(msg.value) << endl;
