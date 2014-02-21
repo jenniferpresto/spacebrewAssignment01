@@ -2,7 +2,7 @@
 
 //--------------------------------------------------------------
 void testApp::setup(){
-    ofSetFrameRate(60);
+    ofSetFrameRate(30);
     ofSetVerticalSync(true);
     ofBackground(255);
     ofSetBackgroundAuto(FALSE);
@@ -30,6 +30,18 @@ void testApp::setup(){
     lHeart.setAnchorPercent(0.5, 0.5);
     rHeart.setAnchorPercent(0.5, 0.5);
     fullHeart.setAnchorPercent(0.5, 0.5);
+    
+    currentFrame = ofGetFrameNum();
+    lastFrame = ofGetFrameNum();
+    posCounter = 0;
+    tempX = "0";
+    tempY = "0";
+    tempLX = "0";
+    tempLY = "0";
+    txRecd = false;
+    tyRecd = false;
+    tlxRecd = false;
+    tlyRecd = false;
     
     bSaveRequestSent = false;
     
@@ -66,6 +78,8 @@ void testApp::update(){
 
 //--------------------------------------------------------------
 void testApp::draw(){
+    
+//    cout << "frame at beginning of draw: " << ofGetFrameNum() << endl;
     // gray rectangle
     ofSetColor(240);
     ofRect(0, 430, ofGetWindowWidth(), 40);
@@ -135,6 +149,8 @@ void testApp::draw(){
     // draw remote information
     ofSetColor(remoteColor);
     ofLine(remoteLastX, remoteLastY, remoteX, remoteY);
+    
+//    cout << "frame at end of draw: " << ofGetFrameNum() << endl;
 }
 
 //--------------------------------------------------------------
@@ -176,7 +192,7 @@ void testApp::mouseReleased(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
     
-    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
+//    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
     
     if (msg.name == "button") {
         bSaveRequestReceived = true;
@@ -194,32 +210,70 @@ void testApp::onMessage( Spacebrew::Message & msg ){
         }
     }
     
-    char chars[] = "\"";
+    // temp variables will hold values from message;
+    // we will only change the actual variables to affect the drawing if all four temp variables are received
+    // in the same frame;
+    
+    if (msg.name == "posX" || msg.name == "posY" || msg.name == "lastPosX" || msg.name == "lastPosY") {
+
+        // always reset the current frame
+        currentFrame = ofGetFrameNum();
+//        cout << "currentFrame: " << currentFrame << endl;
+//        cout << "last Frame: " << lastFrame << endl;
+        // this function is called multiple times per frame, want to accumulate if currentFrame and lastFrame match
+        // but if not, reset everything
+        if ( currentFrame > lastFrame ) {
+            lastFrame = currentFrame;
+            txRecd = false;
+            tyRecd = false;
+            tlxRecd = false;
+            tlyRecd = false;
+//            cout << "resetting the booleans!" << endl;
+        }
+    }
+    
+    char chars[] = "\""; // variable for removing quotation marks
+    
     if (msg.name == "posX") {
-//        remoteX = ofToInt(msg.value);
-        string tempX = msg.value;
+        tempX = msg.value;
         for ( unsigned int i = 0; i < strlen(chars); ++i) {
             tempX.erase (std::remove(tempX.begin(), tempX.end(), chars[i]), tempX.end());
         }
-//        tempX = atoi(msg.value.c_str());
-        remoteX = ofToInt(tempX);
-        cout << "tempX: " << tempX << " remoteX: " << remoteX << endl;
-        cout << "type is: " << typeid(msg.value).name() << endl;
-        cout << "just value is " << msg.value << endl;
-        cout << "with ofToInt: " << ofToInt(msg.value) << endl;
-        cout << "with crazy c++ stuff: " << atoi(msg.value.c_str()) << endl;
-        cout << "calling posX function and remoteX is now: " << remoteX << endl;
+        txRecd = true;
     }
     if (msg.name == "posY") {
-        remoteY = ofToInt(msg.value);
+        tempY = msg.value;
+        for ( unsigned int i = 0; i < strlen(chars); ++i) {
+            tempY.erase (std::remove(tempY.begin(), tempY.end(), chars[i]), tempY.end());
+        }
+        tyRecd = true;
     }
     if (msg.name == "lastPosX") {
-        remoteLastX = ofToInt(msg.value);
+        tempLX = msg.value;
+        for ( unsigned int i = 0; i < strlen(chars); ++i) {
+            tempLX.erase (std::remove(tempLX.begin(), tempLX.end(), chars[i]), tempLX.end());
+        }
+        tlxRecd = true;
     }
     if (msg.name == "lastPosY") {
-        remoteLastY = ofToInt(msg.value);
+        tempLY = msg.value;
+        for ( unsigned int i = 0; i < strlen(chars); ++i) {
+            tempLY.erase (std::remove(tempLY.begin(), tempLY.end(), chars[i]), tempLY.end());
+        }
+        tlyRecd = true;
     }
     
+    // if we've received all four positions within the same frame, use them
+    if( (currentFrame == lastFrame) && txRecd && tyRecd && tlxRecd && tlyRecd ) {
+//        cout << "all conditions satisfied" << endl;
+        remoteX = ofToInt(tempX);
+        remoteY = ofToInt(tempY);
+        remoteLastX = ofToInt(tempLX);
+        remoteLastY = ofToInt(tempLY);
+//        cout << "and the numbers are: " << remoteX << " " << remoteY << " " << remoteLastX << " " << remoteLastY << endl;
+    }
+//    cout << "frame from CustomMessage function: " << ofGetFrameNum() << endl;
+
 }
 
 //--------------------------------------------------------------

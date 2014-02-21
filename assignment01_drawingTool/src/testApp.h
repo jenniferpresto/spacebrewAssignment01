@@ -33,6 +33,14 @@ class testApp : public ofBaseApp{
     ofColor remoteColor;
     ofImage gHeart, lHeart, rHeart, fullHeart;
     
+    // variables to test data to make sure we're getting everything
+    int currentFrame, lastFrame;
+    int posCounter;
+    // including temp variables to make sure everything is received
+    string tempX, tempY, tempLX, tempLY; // these will hold remote variables temporarily
+    bool txRecd, tyRecd, tlxRecd, tlyRecd;
+
+    
     bool bSaveRequestSent;
     bool bSaveRequestReceived;
 };
