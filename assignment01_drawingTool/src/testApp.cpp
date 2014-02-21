@@ -240,6 +240,13 @@ void testApp::onMessage( Spacebrew::Message & msg ){
             tempX.erase (std::remove(tempX.begin(), tempX.end(), chars[i]), tempX.end());
         }
         txRecd = true;
+        
+        // ---------------
+        // Test only: checking out valueRange() method
+        int testFunctionValue;
+        testFunctionValue = msg.valueRange();
+        cout << "value: " << testFunctionValue << " and type: " << typeid(testFunctionValue).name() << endl;
+        // ----------------
     }
     if (msg.name == "posY") {
         tempY = msg.value;
@@ -273,6 +280,8 @@ void testApp::onMessage( Spacebrew::Message & msg ){
 //        cout << "and the numbers are: " << remoteX << " " << remoteY << " " << remoteLastX << " " << remoteLastY << endl;
     }
 //    cout << "frame from CustomMessage function: " << ofGetFrameNum() << endl;
+    
+    
 
 }
 
