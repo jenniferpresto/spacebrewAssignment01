@@ -3,13 +3,14 @@
  Two-person drawing tool
  Two people on separate devices draw one picture;
  when they both hit the button indicating they're
- done, the app saves the image to a file.
+ done, the app saves the image to a file and
+ wipes the slate clean.
  
  Spacebrew, Assignment 1
  February 25, 2014
  
  Jennifer Presto
- Susan
+ Susan Lin
  
  ******************************/
 
@@ -45,7 +46,7 @@ class testApp : public ofBaseApp{
     int lastX, lastY;
     int remoteX, remoteY;
     int remoteLastX, remoteLastY;
-    bool isDrawing;
+    bool bIsDrawing;
     ofColor penColor;
     ofColor remoteColor;
     ofImage gHeart, lHeart, rHeart, fullHeart;

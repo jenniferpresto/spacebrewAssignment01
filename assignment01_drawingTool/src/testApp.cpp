@@ -10,7 +10,7 @@ void testApp::setup(){
     ofSetCircleResolution( 100 );
     ofSetLineWidth(3);
     
-    isDrawing = false;
+    bIsDrawing = false;
     lastX = 0;
     lastY = 0;
     
@@ -33,6 +33,8 @@ void testApp::setup(){
     
     currentFrame = ofGetFrameNum();
     lastFrame = ofGetFrameNum();
+    
+    // variables use to test if we receive a complete line in each frame
     tempX = 0;
     tempY = 0;
     tempLX = 0;
@@ -73,17 +75,11 @@ void testApp::setup(){
 
 //--------------------------------------------------------------
 void testApp::update(){
-    if ( bSaveRequestReceived && bSaveRequestSent ) {
-        ofSaveFrame();
-        bSaveRequestReceived = false;
-        bSaveRequestSent = false;
-    }
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
     
-    //    cout << "frame at beginning of draw: " << ofGetFrameNum() << endl;
     // gray rectangle
     ofSetColor(240);
     ofRect(0, 430, ofGetWindowWidth(), 40);
@@ -116,7 +112,8 @@ void testApp::draw(){
     if ( bSaveRequestReceived ) {
         lHeart.draw(400, 450);
     }
-    if ( bSaveRequestSent && bSaveRequestReceived ) {
+    
+    if (bSaveRequestSent && bSaveRequestReceived ) {
         fullHeart.draw(400, 450);
     }
     
@@ -137,7 +134,7 @@ void testApp::draw(){
     ofSetColor( penColor );
     
     // local drawing
-    if ( isDrawing ) {
+    if ( bIsDrawing ) {
         ofLine(lastX, lastY, mouseX, mouseY);
         
         // every time we draw a line, send a message to the remote app
@@ -151,20 +148,29 @@ void testApp::draw(){
     }
     
     // draw remote information
+    // note, the remote variables will update only when
+    // the app receives all four within one frame
     ofSetColor(remoteColor);
     ofLine(remoteLastX, remoteLastY, remoteX, remoteY);
     
-    //    cout << "frame at end of draw: " << ofGetFrameNum() << endl;
+    if ( bSaveRequestReceived && bSaveRequestSent ) {
+        // fullHeart.draw(400, 450); // note: if draw heart here, is black in saved .png file
+        ofSaveFrame();
+        bSaveRequestReceived = false;
+        bSaveRequestSent = false;
+        ofSetColor( 255, 255, 255 );
+        ofRect(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+    }
 }
 
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
     
     // resetting lastX and lastY so line will separate when unclick the mouse
-    if ( !isDrawing ) {
+    if ( !bIsDrawing ) {
         lastX = mouseX;
         lastY = mouseY;
-        isDrawing = true;
+        bIsDrawing = true;
     }
     
     // change local pen color and notify remote
@@ -190,18 +196,18 @@ void testApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::mouseReleased(int x, int y, int button){
-    isDrawing = false;
+    bIsDrawing = false;
 }
 
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
     
-    //    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
-    
+    // message if remote hits save button
     if (msg.name == "button") {
         bSaveRequestReceived = true;
     }
     
+    // message when remote changes pen color
     if (msg.name == "color") {
         if ( msg.value == "black" ) {
             remoteColor.set(0, 0, 0);
@@ -214,89 +220,100 @@ void testApp::onMessage( Spacebrew::Message & msg ){
         }
     }
     
-    // temp variables will hold values from message;
-    // we will only change the actual variables to affect the drawing if all four temp variables are received
-    // in the same frame;
-    
+    // message about remote drawing positions
     if (msg.name == "posX" || msg.name == "posY" || msg.name == "lastPosX" || msg.name == "lastPosY") {
         
         // always reset the current frame
         currentFrame = ofGetFrameNum();
-        //        cout << "currentFrame: " << currentFrame << endl;
-        //        cout << "last Frame: " << lastFrame << endl;
-        // this function is called multiple times per frame, want to accumulate if currentFrame and lastFrame match
-        // but if not, reset everything
+        
+        // when it's a new frame, reset everything
+        
         if ( currentFrame > lastFrame ) {
             lastFrame = currentFrame;
             txRecd = false;
             tyRecd = false;
             tlxRecd = false;
             tlyRecd = false;
-            //            cout << "resetting the booleans!" << endl;
         }
+        
+        // temp variables will hold values from message;
+        // because onMessage() function is called multiple times per frame,
+        // we're flagging when each position is received
+        
+        if (msg.name == "posX") {
+            tempX = convertProcessingRangeMessage(msg.value);
+            cout << "tempX: " << tempX << endl;
+            txRecd = true;
+        }
+        
+        if (msg.name == "posY") {
+            tempY = convertProcessingRangeMessage(msg.value);
+            tyRecd = true;
+        }
+        if (msg.name == "lastPosX") {
+            tempLX = convertProcessingRangeMessage(msg.value);
+            tlxRecd = true;
+        }
+        if (msg.name == "lastPosY") {
+            tempLY = convertProcessingRangeMessage(msg.value);
+            tlyRecd = true;
+        }
+        
     }
     
-    //    char chars[] = "\""; // variable for removing quotation marks
-    
-    if (msg.name == "posX") {
-        tempX = convertProcessingRangeMessage(msg.value);
-        cout << "tempX: " << tempX << endl;
-        txRecd = true;
-    }
-    
-    if (msg.name == "posY") {
-        tempY = convertProcessingRangeMessage(msg.value);
-        tyRecd = true;
-    }
-    if (msg.name == "lastPosX") {
-        tempLX = convertProcessingRangeMessage(msg.value);
-        tlxRecd = true;
-    }
-    if (msg.name == "lastPosY") {
-        tempLY = convertProcessingRangeMessage(msg.value);
-        tlyRecd = true;
-    }
-    
+    // we will only change the variables for drawing if all four
+    // position variables are received in the same frame;
     // if we've received all four positions within the same frame, use them
+
     if( (currentFrame == lastFrame) && txRecd && tyRecd && tlxRecd && tlyRecd ) {
-        //        cout << "all conditions satisfied" << endl;
         remoteX = tempX;
         remoteY = tempY;
         remoteLastX = tempLX;
         remoteLastY = tempLY;
     }
-    
 }
 
 
 //--------------------------------------------------------------
 int testApp::convertProcessingRangeMessage( string recdMsg ) {
     
+    // because the range message come from Processing with double quotation marks,
+    // we have to parse it in order to extract an integer
+    
     recdMsg.erase (std::remove(recdMsg.begin(), recdMsg.end(), '\"'), recdMsg.end());
     return ofToInt(recdMsg);
     
     /******************
-     Alternate way to parse message
-     Not currently working: includes blank character at the end
+     // Alternate way to parse message
      
      cout << "recdMsg: " << recdMsg << endl;
+     
+     const char * value = recdMsg.c_str();
+     int final = 0;
+     for (const char * i = value; *i; ++i) {
+     if (*i >= '0' && *i <= '9') {
+     final = (final * 10) + ((*i) - '0');
+     }
+     }
+     return final;
+     ******************/
+    
+    /******************
+     // Another alternative
      
      char * value = new char[recdMsg.length() + 1];
      strcpy(value, recdMsg.c_str());
      
      int final = 0;
      for (char * i = value; *i; ++i) {
-         if (*i != '\"') {
-             final = (final * 10) + ((*i) - '0');
-             
-             cout << "*i: " << *i << endl;
-         }
+     if (*i >= '0' && *i <= '9') {
+     final = (final * 10) + ((*i) - '0');
      }
-     
+     }
      delete[] value;
      return final;
-     
      ******************/
+    
 }
 
 //--------------------------------------------------------------
