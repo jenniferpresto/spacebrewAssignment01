@@ -18,7 +18,7 @@ void testApp::setup(){
     remoteY = 0;
     remoteLastX = 0;
     remoteLastY = 0;
-
+    
     penColor = ofColor(0, 0, 0);
     remoteColor = ofColor(0, 0, 0);
     
@@ -33,11 +33,10 @@ void testApp::setup(){
     
     currentFrame = ofGetFrameNum();
     lastFrame = ofGetFrameNum();
-    posCounter = 0;
-    tempX = "0";
-    tempY = "0";
-    tempLX = "0";
-    tempLY = "0";
+    tempX = 0;
+    tempY = 0;
+    tempLX = 0;
+    tempLY = 0;
     txRecd = false;
     tyRecd = false;
     tlxRecd = false;
@@ -79,7 +78,7 @@ void testApp::update(){
 //--------------------------------------------------------------
 void testApp::draw(){
     
-//    cout << "frame at beginning of draw: " << ofGetFrameNum() << endl;
+    //    cout << "frame at beginning of draw: " << ofGetFrameNum() << endl;
     // gray rectangle
     ofSetColor(240);
     ofRect(0, 430, ofGetWindowWidth(), 40);
@@ -129,7 +128,7 @@ void testApp::draw(){
         ofCircle(200, 450, 18);
     }
     ofFill();
-
+    
     ofSetColor( penColor );
     
     // local drawing
@@ -141,7 +140,7 @@ void testApp::draw(){
         spacebrew.sendRange("lastPosY", lastY);
         spacebrew.sendRange("posX", mouseX);
         spacebrew.sendRange("posY", mouseY);
-
+        
         lastX = mouseX;
         lastY = mouseY;
     }
@@ -150,7 +149,7 @@ void testApp::draw(){
     ofSetColor(remoteColor);
     ofLine(remoteLastX, remoteLastY, remoteX, remoteY);
     
-//    cout << "frame at end of draw: " << ofGetFrameNum() << endl;
+    //    cout << "frame at end of draw: " << ofGetFrameNum() << endl;
 }
 
 //--------------------------------------------------------------
@@ -192,7 +191,7 @@ void testApp::mouseReleased(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
     
-//    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
+    //    cout << "received message, name is: " << msg.name << " and value is " << msg.value << endl;
     
     if (msg.name == "button") {
         bSaveRequestReceived = true;
@@ -215,11 +214,11 @@ void testApp::onMessage( Spacebrew::Message & msg ){
     // in the same frame;
     
     if (msg.name == "posX" || msg.name == "posY" || msg.name == "lastPosX" || msg.name == "lastPosY") {
-
+        
         // always reset the current frame
         currentFrame = ofGetFrameNum();
-//        cout << "currentFrame: " << currentFrame << endl;
-//        cout << "last Frame: " << lastFrame << endl;
+        //        cout << "currentFrame: " << currentFrame << endl;
+        //        cout << "last Frame: " << lastFrame << endl;
         // this function is called multiple times per frame, want to accumulate if currentFrame and lastFrame match
         // but if not, reset everything
         if ( currentFrame > lastFrame ) {
@@ -228,94 +227,103 @@ void testApp::onMessage( Spacebrew::Message & msg ){
             tyRecd = false;
             tlxRecd = false;
             tlyRecd = false;
-//            cout << "resetting the booleans!" << endl;
+            //            cout << "resetting the booleans!" << endl;
         }
     }
     
-    char chars[] = "\""; // variable for removing quotation marks
+    //    char chars[] = "\""; // variable for removing quotation marks
     
     if (msg.name == "posX") {
-        tempX = msg.value;
-        for ( unsigned int i = 0; i < strlen(chars); ++i) {
-            tempX.erase (std::remove(tempX.begin(), tempX.end(), chars[i]), tempX.end());
-        }
+        tempX = convertProcessingRangeMessage(msg.value);
+        cout << "tempX: " << tempX << endl;
         txRecd = true;
-        
-        // ---------------
-        // Test only: checking out valueRange() method
-        int testFunctionValue;
-        testFunctionValue = msg.valueRange();
-        cout << "value: " << testFunctionValue << " and type: " << typeid(testFunctionValue).name() << endl;
-        // ----------------
     }
+    
     if (msg.name == "posY") {
-        tempY = msg.value;
-        for ( unsigned int i = 0; i < strlen(chars); ++i) {
-            tempY.erase (std::remove(tempY.begin(), tempY.end(), chars[i]), tempY.end());
-        }
+        tempY = convertProcessingRangeMessage(msg.value);
         tyRecd = true;
     }
     if (msg.name == "lastPosX") {
-        tempLX = msg.value;
-        for ( unsigned int i = 0; i < strlen(chars); ++i) {
-            tempLX.erase (std::remove(tempLX.begin(), tempLX.end(), chars[i]), tempLX.end());
-        }
+        tempLX = convertProcessingRangeMessage(msg.value);
         tlxRecd = true;
     }
     if (msg.name == "lastPosY") {
-        tempLY = msg.value;
-        for ( unsigned int i = 0; i < strlen(chars); ++i) {
-            tempLY.erase (std::remove(tempLY.begin(), tempLY.end(), chars[i]), tempLY.end());
-        }
+        tempLY = convertProcessingRangeMessage(msg.value);
         tlyRecd = true;
     }
     
     // if we've received all four positions within the same frame, use them
     if( (currentFrame == lastFrame) && txRecd && tyRecd && tlxRecd && tlyRecd ) {
-//        cout << "all conditions satisfied" << endl;
-        remoteX = ofToInt(tempX);
-        remoteY = ofToInt(tempY);
-        remoteLastX = ofToInt(tempLX);
-        remoteLastY = ofToInt(tempLY);
-//        cout << "and the numbers are: " << remoteX << " " << remoteY << " " << remoteLastX << " " << remoteLastY << endl;
+        //        cout << "all conditions satisfied" << endl;
+        remoteX = tempX;
+        remoteY = tempY;
+        remoteLastX = tempLX;
+        remoteLastY = tempLY;
     }
-//    cout << "frame from CustomMessage function: " << ofGetFrameNum() << endl;
     
-    
+}
 
+
+//--------------------------------------------------------------
+int testApp::convertProcessingRangeMessage( string recdMsg ) {
+    
+    recdMsg.erase (std::remove(recdMsg.begin(), recdMsg.end(), '\"'), recdMsg.end());
+    return ofToInt(recdMsg);
+    
+    /******************
+    Alternate way to parse message
+    
+    cout << "recdMsg: " << recdMsg << endl;
+    
+    char * value = new char[recdMsg.length() + 1];
+    strcpy(value, recdMsg.c_str());
+    
+    int final = 0;
+    for (char * i = value; *i; i++) {
+        if (*i != '\"') {
+            final = (final * 10) + ((*i) - '0');
+            
+            cout << "*i: " << *i << endl;
+        }
+    }
+    
+    delete[] value;
+    return final;
+    
+    ******************/
 }
 
 //--------------------------------------------------------------
 void testApp::keyPressed(int key){
-
+    
 }
 
 //--------------------------------------------------------------
 void testApp::keyReleased(int key){
-
+    
 }
 
 //--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
-
+    
 }
 
 //--------------------------------------------------------------
 void testApp::mouseDragged(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void testApp::windowResized(int w, int h){
-
+    
 }
 
 //--------------------------------------------------------------
 void testApp::gotMessage(ofMessage msg){
-
+    
 }
 
 //--------------------------------------------------------------
-void testApp::dragEvent(ofDragInfo dragInfo){ 
-
+void testApp::dragEvent(ofDragInfo dragInfo){
+    
 }

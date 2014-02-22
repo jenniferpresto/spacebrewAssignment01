@@ -1,3 +1,18 @@
+/*******************************
+ 
+ Two-person drawing tool
+ Two people on separate devices draw one picture;
+ when they both hit the button indicating they're
+ done, the app saves the image to a file.
+ 
+ Spacebrew, Assignment 1
+ February 25, 2014
+ 
+ Jennifer Presto
+ Susan
+ 
+ ******************************/
+
 #pragma once
 
 #include "ofMain.h"
@@ -24,6 +39,8 @@ class testApp : public ofBaseApp{
     Spacebrew::Connection spacebrew;
     void onMessage( Spacebrew::Message & msg );
     
+    int convertProcessingRangeMessage( string recdMsg );
+    
     // basic drawing information
     int lastX, lastY;
     int remoteX, remoteY;
@@ -35,9 +52,8 @@ class testApp : public ofBaseApp{
     
     // variables to test data to make sure we're getting everything
     int currentFrame, lastFrame;
-    int posCounter;
     // including temp variables to make sure everything is received
-    string tempX, tempY, tempLX, tempLY; // these will hold remote variables temporarily
+    int tempX, tempY, tempLX, tempLY; // these will hold remote variables temporarily
     bool txRecd, tyRecd, tlxRecd, tlyRecd;
 
     
