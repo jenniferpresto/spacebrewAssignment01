@@ -73,6 +73,11 @@ void testApp::setup(){
 
 //--------------------------------------------------------------
 void testApp::update(){
+    if ( bSaveRequestReceived && bSaveRequestSent ) {
+        ofSaveFrame();
+        bSaveRequestReceived = false;
+        bSaveRequestSent = false;
+    }
 }
 
 //--------------------------------------------------------------
@@ -271,26 +276,27 @@ int testApp::convertProcessingRangeMessage( string recdMsg ) {
     return ofToInt(recdMsg);
     
     /******************
-    Alternate way to parse message
-    
-    cout << "recdMsg: " << recdMsg << endl;
-    
-    char * value = new char[recdMsg.length() + 1];
-    strcpy(value, recdMsg.c_str());
-    
-    int final = 0;
-    for (char * i = value; *i; i++) {
-        if (*i != '\"') {
-            final = (final * 10) + ((*i) - '0');
-            
-            cout << "*i: " << *i << endl;
-        }
-    }
-    
-    delete[] value;
-    return final;
-    
-    ******************/
+     Alternate way to parse message
+     Not currently working: includes blank character at the end
+     
+     cout << "recdMsg: " << recdMsg << endl;
+     
+     char * value = new char[recdMsg.length() + 1];
+     strcpy(value, recdMsg.c_str());
+     
+     int final = 0;
+     for (char * i = value; *i; ++i) {
+         if (*i != '\"') {
+             final = (final * 10) + ((*i) - '0');
+             
+             cout << "*i: " << *i << endl;
+         }
+     }
+     
+     delete[] value;
+     return final;
+     
+     ******************/
 }
 
 //--------------------------------------------------------------
