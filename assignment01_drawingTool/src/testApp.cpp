@@ -2,7 +2,7 @@
 
 //--------------------------------------------------------------
 void testApp::setup(){
-    ofSetFrameRate(30);
+    ofSetFrameRate(60);
     ofSetVerticalSync(true);
     ofBackground(255);
     ofSetBackgroundAuto(FALSE);
@@ -201,6 +201,7 @@ void testApp::mouseReleased(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::onMessage( Spacebrew::Message & msg ){
+    cout << "calling onMessage function, frame number: " << ofGetFrameNum() << endl;
     
     // message if remote hits save button
     if (msg.name == "button") {
@@ -242,7 +243,7 @@ void testApp::onMessage( Spacebrew::Message & msg ){
         
         if (msg.name == "posX") {
             tempX = convertProcessingRangeMessage(msg.value);
-            cout << "tempX: " << tempX << endl;
+//            cout << "tempX: " << tempX << endl;
             txRecd = true;
         }
         
